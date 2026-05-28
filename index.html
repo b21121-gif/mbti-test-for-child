@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미취학 아동 MBTI 검사</title>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            width: 90%;
+            max-width: 550px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 35px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        h1 { color: #2c3e50; font-size: 26px; margin-bottom: 10px; }
+        p.subtitle { color: #7f8c8d; font-size: 15px; margin-bottom: 30px; line-height: 1.5; }
+        
+        .hidden { display: none !important; }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover { background-color: #2980b9; }
+        .btn-girl { background-color: #e74c3c; }
+        .btn-girl:hover { background-color: #c0392b; }
+        .btn-boy { background-color: #3498db; }
+        .btn-boy:hover { background-color: #2980b9; }
+
+        .btn-option { background-color: #f1f2f6; color: #2f3542; margin: 8px 0; font-size: 15px; }
+        .btn-option:hover { background-color: #dfe4ea; }
+
+        .btn-back {
+            background-color: transparent;
+            color: #95a5a6;
+            border: 1px solid #bdc3c7;
+            margin-top: 25px;
+        }
+        .btn-back:hover { background-color: #ecf0f1; color: #7f8c8d; }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: #2ecc71;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .warning {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .result-icon { font-size: 65px; margin: 10px 0; }
+        .result-title { font-size: 32px; color: #2c3e50; font-weight: bold; margin-bottom: 5px; }
+        .result-desc { background: #f8f9fa; padding: 25px; border-radius: 12px; text-align: left; margin-bottom: 20px; line-height: 1.7; font-size: 15px; }
+        
+        .highlight { font-weight: bold; font-size: 16px; display: block; margin-bottom: 8px; }
+        .tip-box { border-left: 5px solid #2ecc71; padding-left: 15px; margin-top: 25px; }
+        .warning-box { border-left: 5px solid #e74c3c; padding-left: 15px; margin-top: 25px; }
+        
+        .footer-note { font-size: 13px; color: #7f8c8d; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; line-height: 1.5; }
+
+    </style>
+</head>
+<body>
+
+<div class="container" id="intro-screen">
+    <h1>우리 아이 성격 파악 검사</h1>
+    <p class="subtitle">자녀의 평소 행동을 가장 잘 아는 부모님이 직접 관찰한 내용을 바탕으로 아이의 숨겨진 성향과 맞춤 양육 팁을 알아보세요!</p>
+    <h3 style="color:#2c3e50; margin-bottom: 20px;">먼저 자녀의 성별을 선택해주세요</h3>
+    <button class="btn btn-boy" onclick="startTest('boy')">👦 남자아이</button>
+    <button class="btn btn-girl" onclick="startTest('girl')">👧 여자아이</button>
+</div>
+
+<div class="container hidden" id="test-screen">
+    <div class="progress-bar"><div class="progress" id="progress"></div></div>
+    <h2 id="question-text" style="font-size: 20px; word-break: keep-all; line-height: 1.5; margin-bottom: 35px; color:#2c3e50;"></h2>
+    
+    <div id="options-container">
+        <button class="btn btn-option" onclick="selectAnswer(4)">매우 그렇다</button>
+        <button class="btn btn-option" onclick="selectAnswer(3)">조금 그렇다</button>
+        <button class="btn btn-option" onclick="selectAnswer(2)">조금 아니다</button>
+        <button class="btn btn-option" onclick="selectAnswer(1)">전혀 아니다</button>
+    </div>
+
+    <p id="warning-msg" class="warning hidden">⚠️ 너무 빨리 선택하시면 검사 결과가 부정확해질 수 있어요!</p>
+    <button class="btn btn-back" onclick="goBack()">돌아가기 (이전 질문)</button>
+</div>
+
+<div class="container hidden" id="result-screen">
+    <div class="result-icon" id="result-icon">👶</div>
+    <div class="result-title" id="result-type">MBTI</div>
+    <p style="color: #7f8c8d; margin-top: 0; font-size:16px;">우리 아이의 예상 성격 유형</p>
+    
+    <div class="result-desc">
+        <div id="result-traits" style="font-weight:500;"></div>
+        <div class="tip-box">
+            <span class="highlight" style="color: #27ae60;">💡 맞춤 양육 팁</span> 
+            <span id="result-tips"></span>
+        </div>
+        <div class="warning-box">
+            <span class="highlight" style="color: #c0392b;">⚠️ 보완이 필요한 점</span> 
+            <span id="result-caution"></span>
+        </div>
+    </div>
+
+    <button class="btn" onclick="location.reload()" style="background-color: #2c3e50;">검사 다시하기</button>
+    
+    <div class="footer-note">
+        ※ 본 검사 결과는 참고용임. 아이의 타고난 기질을 이해하는 도구일 뿐, 부모님의 애정 어린 <b>'관찰과 대화'</b>가 아이를 이해하는 가장 정확한 방법임을 잊지 마시길 바람!
+    </div>
+</div>
+
+<script>
+    // 질문 순서는 E/I, S/N, T/F, J/P가 섞이도록 무작위 배치함
+    // 성별에 따라 부모가 일상에서 관찰하기 쉬운 맞춤형 질문으로 분리
+    const questionsBoy = [
+        { type: 'J', text: "장난감을 가지고 놀고 난 후, 부모가 시키지 않아도 자기만의 규칙에 따라 원래 자리에 정리해두는 편이다." },
+        { type: 'E', text: "주말에 외출할 때, 사람도 많고 처음 보는 또래 아이들이 있는 키즈카페나 놀이터에 가는 것을 아주 신나한다." },
+        { type: 'N', text: "로봇이나 블록을 가지고 놀 때 설명서대로 만들기보다는, 자신만의 새로운 형태를 만들며 엉뚱한 스토리를 지어내길 좋아한다." },
+        { type: 'T', text: "형제나 부모가 다쳐서 아파할 때, 같이 속상해하기보다 '왜 넘어졌어? 어디 부딪혔어?'라며 상황을 먼저 파악하려 한다." },
+        { type: 'I', text: "어린이집이나 유치원에서 돌아오면 밖에서 더 놀기보다, 집에서 혼자 자동차나 블록을 꼼지락거리며 조용히 에너지를 충전한다." },
+        { type: 'S', text: "그림을 그리거나 무언가를 설명할 때, 상상 속의 괴물보다는 오늘 본 자동차, 먹은 간식 등 실제 있었던 일을 구체적으로 묘사한다." },
+        { type: 'P', text: "놀이공원에 가기로 했다가 갑자기 비가 와서 마트에 가게 되어도 크게 떼쓰지 않고, 금방 마트 구경에 흥미를 느낀다." },
+        { type: 'F', text: "부모가 피곤해 보이거나 한숨을 쉬면, 슬그머니 다가와 안아주거나 눈치를 보는 등 어른의 감정 변화에 매우 민감하다." },
+        { type: 'J', text: "잠자리에 들기 전 양치하기, 책 읽기 등 매일 하던 순서(루틴)가 지켜지지 않으면 찝찝해하거나 꼭 하고 자려고 고집을 부린다." },
+        { type: 'E', text: "집에서 놀 때 혼자 놀기보다는 부모나 형제에게 끊임없이 말을 걸며, 자신의 놀이에 누군가 계속 참여해주기를 바란다." },
+        { type: 'N', text: "'만약에 공룡이 지금 살아있으면 어떨까?' 같이 당장 일어나지 않을 일에 대해 질문을 던지며 꼬리에 꼬리를 무는 상상을 한다." },
+        { type: 'T', text: "형제나 친구와 간식을 나눌 때, 누가 더 많이 먹었는지 혹은 정확하게 반으로 나누어졌는지 등 '공평함'에 매우 예민하게 반응한다." }
+    ];
+
+    const questionsGirl = [
+        { type: 'J', text: "소꿉놀이나 인형놀이를 할 때, 물건들의 제자리가 정해져 있고 다 놀고 나면 원래 위치대로 깔끔하게 세팅해 두는 것을 좋아한다." },
+        { type: 'E', text: "친척들이 많이 모이는 명절이나 모임에서 부모 뒤에 숨기보다는, 먼저 다가가서 장난을 치거나 자신이 주목받는 상황을 즐긴다." },
+        { type: 'N', text: "인형을 가지고 놀 때 단순히 밥 먹이고 재우는 일상적인 놀이보다, 요정 마을에 가거나 마법을 부리는 등 판타지적인 이야기를 주로 만든다." },
+        { type: 'T', text: "친구끼리 다투고 속상해할 때, 무조건 안아주고 편을 들어주기보다는 '누가 먼저 잘못했어?'라며 자초지종을 따져 물을 때가 있다." },
+        { type: 'I', text: "시끌벅적한 생일파티나 사람 많은 곳에 다녀오면 유독 지쳐하며, 자기 방에서 혼자 조용히 그림을 그리거나 책을 보며 쉬고 싶어 한다." },
+        { type: 'S', text: "원에서 있었던 일을 말해줄 때, '선생님이 무슨 색 옷을 입었는지', '점심 반찬이 뭐였는지' 등 눈에 보이는 사실을 매우 세세하게 기억해 말한다." },
+        { type: 'P', text: "정해진 미술 학원이나 피아노 학원에 가는 시간보다, 그날그날 자기 기분에 따라 즉흥적으로 하고 싶은 놀이를 선택하는 것을 훨씬 좋아한다." },
+        { type: 'F', text: "동화책 주인공이 슬픈 상황에 처하거나 부모가 조금만 우울한 표정을 지어도, 금방 눈물을 글썽이거나 깊이 감정이입을 한다." },
+        { type: 'J', text: "아침에 일어나서 옷 입기, 밥 먹기 등의 일상적인 순서가 일정하며, 부모가 바빠서 갑자기 평소와 다르게 서두르라고 하면 큰 스트레스를 받는다." },
+        { type: 'E', text: "엄마나 아빠가 집안일을 하고 있으면 혼자 방에서 놀지 않고, 계속 따라다니며 말을 걸고 집안일도 놀이처럼 함께 하려고 한다." },
+        { type: 'N', text: "그림을 그릴 때, 눈에 보이는 사과나 나무를 똑같은 색으로 칠하기보다 자신만이 상상한 독특한 색깔이나 모양으로 꾸미기를 좋아한다." },
+        { type: 'T', text: "보드게임이나 놀이를 할 때, 상대방이 져서 속상해하는 것보다 규칙을 정확히 지켜서 정당하게 승패가 갈리는 것을 훨씬 중요하게 생각한다." }
+    ];
+
+    // 결과 데이터 세팅 (음슴체 적용, 양육팁과 보완점 상세화)
+    const resultData = {
+        "ENFJ": { 
+            icon: "🐶", 
+            desc: "사람들을 좋아하고 다정한 골목대장임. 말도 예쁘게 하고 부모나 친구의 감정에 민감하게 반응하는 따뜻한 성향을 가짐.", 
+            tip: "타인의 감정을 잘 읽고 배려하는 모습은 정말 큰 장점이니 평소에 구체적으로 칭찬을 많이 해주셈. 가족 회의나 집안일에서 아이에게 작은 역할(예: 수저 놓기 대장)을 맡겨주면 책임감과 리더십이 훌쩍 자랄 수 있음. 따뜻한 성향이 돋보이도록 여러 사람과 어울리는 환경을 만들어주면 아주 좋아함.", 
+            caution: "친구들이나 주변 어른들의 기대에 맞추려다 보니 정작 본인이 진짜 원하는 것이 무엇인지 말하지 못하고 속앓이를 할 수 있음. '너는 어떻게 하고 싶어?'라고 아이의 진짜 마음을 묻는 질문을 매일 던져주셈. 싫을 때는 거절해도 여전히 사랑받는다는 사실을 꾸준히 안심시켜줘야 함." 
+        },
+        "ENFP": { 
+            icon: "🐬", 
+            desc: "호기심이 팡팡 터지고 에너지가 넘치는 발랄한 성격임. 상상력이 풍부해서 평범한 물건으로도 창의적인 놀이를 뚝딱 만들어냄.", 
+            tip: "아이의 엉뚱한 상상력을 제한하기보다는 '와, 그런 생각도 했어?'라며 맞장구쳐주는 리액션이 아이의 자존감을 크게 높여줌. 에너지가 많으므로 주말마다 새로운 장소에 가보거나 다양한 체험(미술, 체육 등)을 할 수 있도록 환경을 열어주면 스트레스 없이 밝게 자랄 수 있음.", 
+            caution: "이것도 하고 싶고 저것도 하고 싶어서 시작은 잘하지만, 금방 싫증을 내고 마무리를 흐지부지하는 경향이 매우 강함. 장난감을 다 놀고 나면 한 가지라도 스스로 정리하게 하거나, 퍼즐 하나라도 끝까지 완성해 보는 성취감을 부모가 옆에서 도와주며 길러줘야 함." 
+        },
+        "ENTJ": { 
+            icon: "🦁", 
+            desc: "주도적이고 목표 의식이 뚜렷한 꼬마 리더임. 부모에게도 논리적으로 따질 줄 알며, 상황을 자기 뜻대로 통제하려는 성향이 강함.", 
+            tip: "이래라저래라 지시하는 것보다 'A랑 B 중에 어떤 걸 할까?'하고 스스로 결정할 수 있는 선택권을 주는 양육 방식이 매우 효과적임. 아이가 세운 계획이나 목표를 부모가 존중해 주면 특유의 책임감과 추진력이 긍정적인 방향으로 폭발적으로 성장할 수 있음.", 
+            caution: "자기 뜻대로 되지 않거나 다른 사람이 자신의 규칙을 안 따르면 크게 화를 낼 수 있음. 세상 모든 일이 자기 마음대로 될 수는 없다는 점을 단호하지만 부드럽게 가르쳐야 함. 특히 친구들과 놀 때 내 의견만 고집하지 않고 양보하는 법을 역할놀이를 통해 수시로 연습시켜주셈." 
+        },
+        "ENTP": { 
+            icon: "🦊", 
+            desc: "말을 아주 잘하고 질문이 끊이지 않는 꼬마 발명가임. '왜 그렇게 해야 해?'라는 말을 달고 살며 기존의 규칙을 깨보는 걸 좋아함.", 
+            tip: "아이가 던지는 무수한 '왜?'라는 질문에 귀찮아하지 말고, 같이 책이나 인터넷을 찾아보며 지적 호기심을 마음껏 채워주셈. 논리적으로 대화하는 것을 좋아하므로, 부모가 아이를 어린애 취급하지 않고 동등한 대화 상대로 존중해 주면 유대감이 엄청나게 깊어짐.", 
+            caution: "이유가 납득되지 않으면 부모의 지시나 유치원의 규칙을 대수롭지 않게 어기려는 반항적인 기질이 보일 수 있음. '왜 지켜야 하는지'를 충분히 설명해 주되, 위험하거나 남에게 피해를 주는 행동에 대해서는 타협 없는 명확한 선(Boundary)을 그어주는 단호함이 필수적임." 
+        },
+        "ESFJ": { 
+            icon: "🐻", 
+            desc: "가족과 친구를 끔찍이 아끼고 어른들 말씀도 잘 듣는 친절한 모범생임. 눈치가 빨라서 주변 상황에 맞게 싹싹하게 잘 행동함.", 
+            tip: "부모나 어른들의 칭찬을 먹고 자라는 타입이므로, 아이가 누군가를 배려하거나 양보했을 때 그 행동을 콕 짚어서 과장될 정도로 칭찬해 주셈. 정서적으로 안정된 가정 환경을 가장 중요하게 생각하니, 부모가 자주 사랑한다고 표현해 주고 안아주는 스킨십을 많이 해주면 좋음.", 
+            caution: "타인의 인정과 시선에 너무 민감해서, 혹시라도 혼이 나면 자신이 나쁜 아이가 된 것 같아 깊은 좌절감에 빠지기 쉬움. 훈육할 때는 '너의 행동'이 잘못된 것이지 '너라는 사람'을 미워하는 게 아니라는 점을 꼭 분리해서 설명해 줘야 상처받지 않음." 
+        },
+        "ESFP": { 
+            icon: "🦚", 
+            desc: "어디서나 주목받는 것을 좋아하고 언제나 즐거운 분위기 메이커임. 노래, 춤, 예쁜 옷 입기 등 감각적이고 신나는 경험을 사랑함.", 
+            tip: "아이의 넘치는 끼와 쇼맨십을 발산할 수 있도록 집에서 미니 장기자랑을 열어주거나, 춤과 노래 등 예체능 활동을 적극적으로 지원해 주셈. 분위기가 긍정적일 때 무엇이든 잘 해내므로, 양치나 청소 같은 지루한 일상도 게임이나 놀이처럼 재미있게 접근하면 부모도 아이도 편안해짐.", 
+            caution: "재미있고 즐거운 일에만 푹 빠져서 조금이라도 지루하거나 힘든 일(예: 학습지 풀기, 가만히 앉아있기)은 심하게 회피하려 할 수 있음. 당장 재미없어도 해야만 하는 일들이 있다는 것을 알려주고, 작은 인내심을 발휘했을 때 스티커 등 즉각적인 보상을 주어 습관을 들여야 함." 
+        },
+        "ESTJ": { 
+            icon: "🦅", 
+            desc: "규칙을 아주 잘 지키고 정리 정돈도 알아서 척척 하는 듬직하고 야무진 성격임. 정해진 순서대로 일상을 보내는 것을 편해함.", 
+            tip: "미리 하루 일과를 알려주거나 주말 계획을 달력에 함께 적어두면 아이가 매우 큰 심리적 안정감을 느낌. 부모가 아이에게 명확한 역할과 책임(자기 방 불 끄기, 신발 정리하기 등)을 주면 그것을 완벽하게 해내며 스스로 엄청난 뿌듯함을 느끼는 기특한 타입임.", 
+            caution: "융통성이 부족해서 자신이 생각한 계획이나 규칙이 조금이라도 틀어지면 심하게 짜증을 내거나 당황할 수 있음. 세상에는 예외도 있고 계획이 변경될 수도 있다는 것을 알려주며, 가끔은 아무 계획 없이 즉흥적으로 공원에 놀러 나가는 등 유연성을 기르는 훈련이 필요함." 
+        },
+        "ESTP": { 
+            icon: "🐒", 
+            desc: "겁이 없고 일단 몸으로 부딪혀보는 행동파 골목대장임. 에너지가 넘치고 스릴을 즐기며 운동 신경이 유독 뛰어난 경우가 많음.", 
+            tip: "가만히 앉아있는 것은 이 아이에게 고문이나 다름없음. 킥보드, 자전거, 태권도 등 에너지를 흠뻑 쏟아낼 수 있는 신체 활동을 매일매일 충분히 할 수 있게 지원해 주셈. 백 번 말로 설명하는 것보다 한 번 직접 눈으로 보고 만져보며 경험하게 하는 양육 방식이 훨씬 효과적임.", 
+            caution: "결과를 생각하지 않고 순간적인 충동으로 높은 곳에서 뛰어내리거나 위험한 장난을 치는 경우가 많아 부모의 간담을 서늘하게 함. 아이의 행동을 통제하기 전에 먼저 '안전'에 대한 규칙을 엄격하게 세우고, 행동하기 전 마음속으로 3초를 세는 '잠깐 멈춤' 연습을 꾸준히 시켜야 함." 
+        },
+        "INFJ": { 
+            icon: "🦉", 
+            desc: "생각이 매우 깊고 조용하며, 부모의 마음까지도 섬세하게 헤아릴 줄 아는 어른스러운 성격임. 자기만의 깊은 내면세계를 가지고 있음.", 
+            tip: "아이가 평소에 조잘조잘 말을 많이 안 하더라도 속으로는 오만 가지 생각을 다 하고 있음. 아이가 생각을 정리하고 말할 때까지 부모가 재촉하지 않고 차분히 기다려주는 여유가 필요함. 복잡한 감정을 다스릴 수 있도록 아이만의 조용한 아지트 공간(텐트 등)을 집에 만들어주면 아주 좋음.", 
+            caution: "아직 어린아이인데도 부모를 실망시키지 않으려는 마음에 완벽주의적 성향을 보이며 끙끙 앓을 수 있음. '우리 아이는 참 착해서 다 알아서 해'라고 방치하지 말고, 아이도 실수하고 투정 부려도 괜찮은 평범한 아이라는 것을 잊지 마셈. 못해도 괜찮다고 항상 격려해 줘야 함." 
+        },
+        "INFP": { 
+            icon: "🐰", 
+            desc: "감수성이 유리알처럼 섬세하고 마음이 여린 꼬마 몽상가임. 동식물을 사랑하고 혼자만의 평화로운 세계에서 상상하는 것을 좋아함.", 
+            tip: "아이의 여린 마음과 예쁜 상상력을 마음껏 펼칠 수 있도록 그림 그리기, 찰흙 놀이 등 감정을 표현하는 예술 활동을 자주 접하게 해주셈. 아이가 느끼는 사소한 감정도 무시하지 말고 '그랬구나, 정말 슬펐겠다'하고 진심으로 공감해 주는 대화법이 아이의 정서 안정에 가장 큰 보약이 됨.", 
+            caution: "누군가 무심코 던진 말이나 작은 꾸중에도 상처를 깊게 받고 오래 담아두는 경향이 있음. 훈육을 할 때는 강하고 큰 목소리로 억압하기보다는, 부드럽지만 단호한 목소리로 이유를 조곤조곤 설명해 주어야 마음의 문을 닫지 않음. 감정 기복을 부모가 잘 보듬어 주어야 함." 
+        },
+        "INTJ": { 
+            icon: "🐺", 
+            desc: "독립심이 아주 강하고 혼자서 깊이 탐구하고 조립하는 것을 좋아하는 꼬마 학자임. 자기가 관심 있는 분야에는 엄청난 집중력을 보임.", 
+            tip: "아이가 퍼즐이나 블록, 혹은 책에 푹 빠져 있을 때는 밥 먹을 시간을 제외하고는 함부로 흐름을 끊거나 간섭하지 말고 혼자만의 시간을 철저히 존중해 주셈. 원리를 파악할 수 있는 교구나 과학 실험 세트 등을 제공해 주면 아이의 지적 능력이 스펀지처럼 빠르게 성장할 것임.", 
+            caution: "자기만의 세계가 너무 확고해서 다른 사람의 감정이나 사회적 규칙에는 전혀 관심이 없고 무심해 보일 수 있음. 지식은 뛰어나지만 타인과 소통하는 기술은 부족할 수 있으므로, 형제나 부모와 함께 규칙을 지키며 노는 보드게임 등을 통해 '협동'과 '양보'를 의도적으로 가르쳐야 함." 
+        },
+        "INTP": { 
+            icon: "🐈", 
+            desc: "조용하지만 머릿속에는 호기심과 엉뚱한 상상이 가득 찬 관찰자임. 관심 없는 것에는 무신경하지만 좋아하는 분야는 전문가 수준으로 파고듦.", 
+            tip: "아이가 꽂힌 관심사(공룡 이름 줄줄 외우기, 우주 등)가 있다면 부모도 함께 책을 읽어주고 관련 박물관에 데려가는 등 팍팍 밀어주셈. 강압적인 지시보다는 '이건 왜 이렇게 해야 효율적일까?' 하고 아이의 논리적 사고를 자극하는 방식으로 설득하면 신기하게도 말을 잘 듣게 됨.", 
+            caution: "관심 없는 일체(정리정돈, 옷 입기, 양치 등 일상생활)의 행동이 매우 굼뜨거나 아예 잊어버려 부모의 속을 터지게 할 수 있음. 잔소리를 길게 늘어놓는 것은 역효과만 나니, 딱 해야 할 일만 간결하고 명확하게 시각적인 체크리스트로 만들어 벽에 붙여두는 것이 가장 현실적인 방법임." 
+        },
+        "ISFJ": { 
+            icon: "🐨", 
+            desc: "온순하고 얌전하며 부모님을 돕거나 동생을 잘 돌보는 성실하고 착한 성격임. 크고 갑작스러운 변화보다는 익숙한 환경을 가장 편안해함.", 
+            tip: "부모나 가족을 돕는 것을 좋아하니 사소한 집안일이라도 도와주었을 때 '네 덕분에 엄마가 정말 편해졌어, 고마워'라고 아이의 존재 가치를 확인시켜주는 칭찬을 수시로 해주셈. 평화롭고 안정적인 가정 분위기가 유지될 때 아이의 정서가 가장 건강하게 발달하는 타입임.", 
+            caution: "새로운 음식, 새로운 장소, 낯선 사람 등에 대해 남들보다 극도로 두려움을 느끼고 낯가림이 심할 수 있음. 절대 억지로 새로운 것을 강요하거나 다그치지 마셈. 부모가 먼저 편안한 모습을 보여주고 아이가 안전하다고 느낄 때까지 뒤에서 조용히 기다려주는 긴 인내심이 필요함." 
+        },
+        "ISFP": { 
+            icon: "🦌", 
+            desc: "다정하고 온화하며 예술적 감수성이 풍부한 평화주의자임. 갈등이나 큰 소리 나는 것을 싫어하고 모두와 조화롭게 지내려 노력함.", 
+            tip: "아이가 오감(시각, 청각, 촉각 등)으로 세상을 느낄 수 있도록 자연 속에서 흙을 만지며 놀게 하거나, 함께 요리를 하고 음악을 듣는 일상적인 활동이 큰 영감을 줌. 지시하고 통제하기보다는 '이것 한번 해볼까?' 하고 부드럽게 권유하는 양육 방식이 아이의 성향과 가장 잘 맞음.", 
+            caution: "분쟁을 너무 싫어해서 친구가 장난감을 빼앗아도 화내지 못하고 속으로만 끙끙 앓으며 양보해 버리는 경우가 많음. 자기 주장을 펼치는 것을 어려워하므로, 평소에 '너는 어떻게 생각해? 네 의견도 중요해'라고 묻고, 속상한 감정을 안전하게 입 밖으로 표현하는 연습을 부모와 자주 해야 함." 
+        },
+        "ISTJ": { 
+            icon: "🐢", 
+            desc: "신중하고 차분하며 기억력이 놀랍도록 좋음. 유치원이나 집에서 한 번 정해진 규칙은 끝까지 잊지 않고 고지식할 정도로 지키려 함.", 
+            tip: "아이의 책임감과 꼼꼼함을 인정해 주고 일관성 있는 부모의 양육 태도를 보여주는 것이 가장 중요함. 아침에 일어나서 잠들 때까지의 일과가 예측 가능하게 흘러갈 때 심리적으로 큰 안정감을 느끼므로, 내일 일어날 특별한 이벤트(병원 가기 등)는 전날 밤에 미리 꼭 상세히 예고해 주셈.", 
+            caution: "자기 물건의 위치나 자신이 하던 방식에 대한 고집이 매우 강해서, 다른 사람이 그것을 건드리면 크게 분노할 수 있음. 모든 것이 완벽하게 통제될 수 없다는 것을 부드럽게 가르치고, 상황에 따라 'A가 안 되면 B 방법으로 해도 괜찮아'라며 융통성을 기르는 대화를 지속적으로 나눠야 함." 
+        },
+        "ISTP": { 
+            icon: "🦝", 
+            desc: "평소엔 조용하지만 관찰력이 아주 예리함. 손재주가 뛰어나서 장난감을 뚝딱뚝딱 조립하거나 분해해서 고치는 등 도구를 다루는 것을 무척 좋아함.", 
+            tip: "레고, 조립 블록, 혹은 안전한 목공 도구처럼 손을 정교하게 쓰는 장난감을 마음껏 만지게 해 주셈. 아이가 혼자 집중해서 무언가를 만들고 있을 때는 옆에서 훈수 두거나 간섭하지 말고 혼자서 끝까지 해결책을 찾도록 묵묵히 지켜봐 주는 것이 이 아이를 위한 최고의 양육 팁임.", 
+            caution: "감정을 얼굴이나 말로 표현하는 것이 서툴러서 부모가 보기에 무뚝뚝하거나 화가 난 것처럼 오해하기 쉬움. 억지로 감정을 끌어내려 하지 말고, 부모가 먼저 '기쁘다, 속상하다, 화난다' 등의 다양한 감정 단어를 평소 대화에서 자주 사용해 주어 아이가 자연스럽게 표현법을 배우도록 돕셈." 
+        }
+    };
+
+    let currentQuestions = [];
+    let currentQuestionIndex = 0;
+    let lastClickTime = 0;
+    let answers = []; 
+
+    function startTest(gender) {
+        // 성별에 따라 질문 세트 할당
+        if (gender === 'boy') {
+            currentQuestions = questionsBoy;
+        } else {
+            currentQuestions = questionsGirl;
+        }
+
+        document.getElementById('intro-screen').classList.add('hidden');
+        document.getElementById('test-screen').classList.remove('hidden');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const q = currentQuestions[currentQuestionIndex];
+        document.getElementById('question-text').innerText = `Q${currentQuestionIndex + 1}. ${q.text}`;
+        
+        // 진행바 업데이트
+        const progress = ((currentQuestionIndex) / currentQuestions.length) * 100;
+        document.getElementById('progress').style.width = `${progress}%`;
+    }
+
+    function selectAnswer(score) {
+        const currentTime = new Date().getTime();
+        
+        // 0.5초 이내 연속 클릭 방지 로직
+        if (currentTime - lastClickTime < 500) {
+            document.getElementById('warning-msg').classList.remove('hidden');
+            return;
+        }
+        
+        document.getElementById('warning-msg').classList.add('hidden');
+        lastClickTime = currentTime;
+
+        // 질문 유형과 부여된 점수 저장
+        answers[currentQuestionIndex] = {
+            type: currentQuestions[currentQuestionIndex].type,
+            score: score
+        };
+
+        if (currentQuestionIndex < currentQuestions.length - 1) {
+            currentQuestionIndex++;
+            showQuestion();
+        } else {
+            calculateResult();
+        }
+    }
+
+    function goBack() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            answers.pop();
+            showQuestion();
+        } else {
+            // 첫 질문에서 뒤로가기 시 인트로 화면으로 복귀
+            document.getElementById('test-screen').classList.add('hidden');
+            document.getElementById('intro-screen').classList.remove('hidden');
+            answers = [];
+        }
+    }
+
+    function calculateResult() {
+        const scores = { E:0, I:0, S:0, N:0, T:0, F:0, J:0, P:0 };
+        
+        answers.forEach(ans => {
+            scores[ans.type] += ans.score;
+            
+            let opposite = '';
+            if(ans.type === 'E') opposite = 'I'; else if(ans.type === 'I') opposite = 'E';
+            if(ans.type === 'S') opposite = 'N'; else if(ans.type === 'N') opposite = 'S';
+            if(ans.type === 'T') opposite = 'F'; else if(ans.type === 'F') opposite = 'T';
+            if(ans.type === 'J') opposite = 'P'; else if(ans.type === 'P') opposite = 'J';
+            
+            // 4점 선택 시 반대 성향은 1점 획득 (역배점 처리)
+            scores[opposite] += (5 - ans.score); 
+        });
+
+        // 최종 MBTI 도출
+        const resultMBTI = 
+            (scores.E >= scores.I ? 'E' : 'I') +
+            (scores.S >= scores.N ? 'S' : 'N') +
+            (scores.T >= scores.F ? 'T' : 'F') +
+            (scores.J >= scores.P ? 'J' : 'P');
+
+        showResultScreen(resultMBTI);
+    }
+
+    function showResultScreen(mbti) {
+        document.getElementById('test-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+
+        const res = resultData[mbti];
+        
+        document.getElementById('result-icon').innerText = res.icon;
+        document.getElementById('result-type').innerText = mbti;
+        document.getElementById('result-traits').innerText = res.desc;
+        document.getElementById('result-tips').innerText = res.tip;
+        document.getElementById('result-caution').innerText = res.caution;
+    }
+</script>
+</body>
+</html>
